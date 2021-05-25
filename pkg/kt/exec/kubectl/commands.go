@@ -43,7 +43,7 @@ func (k *Cli) PortForwardDashboardToLocal(port string) *exec.Cmd {
 	)
 }
 
-// PortForward ...
+// PortForward ... port-forward 命令
 func (k *Cli) PortForward(namespace, resource string, remotePort int) *exec.Cmd {
 	args := kubectl(k, namespace)
 	args = append(args, "port-forward",
@@ -55,6 +55,7 @@ func (k *Cli) PortForward(namespace, resource string, remotePort int) *exec.Cmd 
 	)
 }
 
+//组装 kubectl 命令
 func kubectl(k *Cli, namespace string) []string {
 	var (
 		args             []string

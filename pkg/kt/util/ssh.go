@@ -121,7 +121,7 @@ func generatePublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
 	return pubKeyBytes, nil
 }
 
-// WritePrivateKey write ssh private key to privateKeyPath
+// WritePrivateKey write ssh private key to privateKeyPath  将私钥写到本地路径下
 func WritePrivateKey(privateKeyPath string, data []byte) error {
 	dir := filepath.Dir(privateKeyPath)
 	if _, err := os.Stat(dir); os.IsNotExist(err) {

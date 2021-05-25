@@ -98,8 +98,10 @@ func (k *Kubernetes) GetOrCreateShadow(name, namespace, image string, labels, en
 	component, version := labels["kt-component"], labels["version"]
 	sshcm = fmt.Sprintf("kt-%s-public-key-%s", component, version)
 
+	//保存私钥地址
 	privateKeyPath := util.PrivateKeyPath(component, version)
 
+	//如果重用shadow
 	if reuseShadow {
 		pod, generator, err2 := k.tryGetExistingShadowRelatedObjs(&ResourceMeta{
 			Name:      name,
@@ -132,6 +134,7 @@ func (k *Kubernetes) GetOrCreateShadow(name, namespace, image string, labels, en
 	return
 }
 
+//创建 shadow影子实例
 func (k *Kubernetes) createShadow(metaAndSpec *PodMetaAndSpec, sshKeyMeta *SSHkeyMeta, debug bool) (podIP string, podName string, credential *util.SSHCredential, err error) {
 
 	generator, err := util.Generate(sshKeyMeta.PrivateKeyPath)
@@ -146,6 +149,7 @@ func (k *Kubernetes) createShadow(metaAndSpec *PodMetaAndSpec, sshKeyMeta *SSHke
 	}
 	log.Info().Msgf("successful create ssh config map %v", configMap.ObjectMeta.Name)
 
+	//创建 pod
 	pod, err2 := k.createAndGetPod(metaAndSpec, sshKeyMeta.Sshcm, debug)
 	if err2 != nil {
 		err = err2
@@ -155,11 +159,15 @@ func (k *Kubernetes) createShadow(metaAndSpec *PodMetaAndSpec, sshKeyMeta *SSHke
 	return
 }
 
+//获取已存在的shadow影子
 func (k *Kubernetes) tryGetExistingShadowRelatedObjs(resourceMeta *ResourceMeta, sshKeyMeta *SSHkeyMeta) (pod *v1.Pod, generator *util.SSHGenerator, err error) {
+	//验证deployment是否存在
 	_, shadowError := k.GetDeployment(resourceMeta.Name, resourceMeta.Namespace)
 	if shadowError != nil {
 		return
 	}
+
+	//查找configMap配置
 	cli := k.Clientset.CoreV1().ConfigMaps(resourceMeta.Namespace)
 	configMap, configMapError := cli.Get(sshKeyMeta.Sshcm, metav1.GetOptions{})
 
@@ -168,16 +176,20 @@ func (k *Kubernetes) tryGetExistingShadowRelatedObjs(resourceMeta *ResourceMeta,
 		return
 	}
 
+	//私钥生成器
 	generator = util.NewSSHGenerator(configMap.Data[vars.SSHAuthPrivateKey], configMap.Data[vars.SSHAuthKey], sshKeyMeta.PrivateKeyPath)
 
+	//私钥写到本地
 	err = util.WritePrivateKey(generator.PrivateKeyPath, []byte(configMap.Data[vars.SSHAuthPrivateKey]))
 	if err != nil {
 		return
 	}
 
+	//获取pod
 	return k.getShadowPod(resourceMeta, generator)
 }
 
+//获取 shadow影子的 pod
 func (k *Kubernetes) getShadowPod(resourceMeta *ResourceMeta, generator *util.SSHGenerator) (pod *v1.Pod, sshGenerator *util.SSHGenerator, err error) {
 	podList, err := k.Clientset.CoreV1().Pods(resourceMeta.Namespace).List(metav1.ListOptions{
 		LabelSelector: k8sLabels.Set(metav1.LabelSelector{MatchLabels: resourceMeta.Labels}.MatchLabels).String(),
@@ -187,6 +199,7 @@ func (k *Kubernetes) getShadowPod(resourceMeta *ResourceMeta, generator *util.SS
 	}
 	if len(podList.Items) == 1 {
 		log.Info().Msgf("Found shared shadow, reuse it")
+		//引用计数+1
 		err = increaseRefCount(resourceMeta.Name, k.Clientset, resourceMeta.Namespace)
 		if err != nil {
 			return
@@ -207,18 +220,20 @@ func increaseRefCount(name string, clientSet kubernetes.Interface, namespace str
 		return err
 	}
 	annotations := deployment.ObjectMeta.Annotations
+	//获取标签中 refCount的值  Atoi===字符串转为int
 	count, err := strconv.Atoi(annotations[vars.RefCount])
 	if err != nil {
 		log.Error().Msgf("Failed to parse annotations[vars.RefCount] of deployment %s with value %s", name, annotations[vars.RefCount])
 		return err
 	}
 
-	deployment.ObjectMeta.Annotations[vars.RefCount] = strconv.Itoa(count + 1)
+	deployment.ObjectMeta.Annotations[vars.RefCount] = strconv.Itoa(count + 1) //Itoa int类型转为string类型
 
 	_, err = clientSet.AppsV1().Deployments(namespace).Update(deployment)
 	return err
 }
 
+//获取shadow的ip、名称、私钥
 func shadowResult(pod v1.Pod, generator *util.SSHGenerator) (string, string, *util.SSHCredential) {
 	podIP := pod.Status.PodIP
 	podName := pod.GetObjectMeta().GetName()
@@ -227,6 +242,7 @@ func shadowResult(pod v1.Pod, generator *util.SSHGenerator) (string, string, *ut
 	return podIP, podName, credential
 }
 
+//创建和获取pod
 func (k *Kubernetes) createAndGetPod(metaAndSpec *PodMetaAndSpec, sshcm string, debug bool) (pod v1.Pod, err error) {
 	localIPAddress := util.GetOutboundIP()
 	log.Info().Msgf("Client address %s", localIPAddress)
@@ -265,30 +281,35 @@ func (k *Kubernetes) createConfigMap(labels map[string]string, sshcm string, nam
 	})
 }
 
-// CreateService create kubernetes service
+// CreateService create kubernetes service  创建服务
 func (k *Kubernetes) CreateService(name, namespace string, port int, labels map[string]string) (*v1.Service, error) {
 	cli := k.Clientset.CoreV1().Services(namespace)
 	svc := service(name, namespace, labels, port)
 	return cli.Create(svc)
 }
 
-// ClusterCrids get cluster cirds
+// ClusterCrids get cluster cirds  获取集群cird集合
 func (k *Kubernetes) ClusterCrids(namespace string, podCIDR string) (cidrs []string, err error) {
+	//获取服务列表
 	serviceList, err := k.Clientset.CoreV1().Services(namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return
 	}
 
+	//获取pod的cird
 	cidrs, err = getPodCirds(k.Clientset, podCIDR)
 	if err != nil {
 		return
 	}
 
+	//获取service的cird
 	services := serviceList.Items
 	serviceCird, err := getServiceCird(services)
 	if err != nil {
 		return
 	}
+
+	//合并
 	cidrs = append(cidrs, serviceCird...)
 	return
 }

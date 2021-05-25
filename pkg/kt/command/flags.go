@@ -50,6 +50,7 @@ func AppFlags(options *options.DaemonOptions, version string) []cli.Flag {
 }
 
 // ConnectActionFlag ...
+// connect 可执行命令的说明
 func ConnectActionFlag(options *options.DaemonOptions) []cli.Flag {
 	return []cli.Flag{
 		cli.StringFlag{

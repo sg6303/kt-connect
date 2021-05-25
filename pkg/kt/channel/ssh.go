@@ -15,8 +15,9 @@ import (
 // SSHChannel ssh channel
 type SSHChannel struct{}
 
-// StartSocks5Proxy start socks5 proxy
+// StartSocks5Proxy start socks5 proxy  开始 socks5 代理
 func (c *SSHChannel) StartSocks5Proxy(certificate *Certificate, sshAddress string, socks5Address string) (err error) {
+	//使用 root:root 用户登录连接
 	conn, err := connection(certificate.Username, certificate.Password, sshAddress)
 	defer conn.Close()
 	if err != nil {
@@ -90,6 +91,7 @@ func connection(username string, password string, address string) (*ssh.Client, 
 		ssh.Password(password),
 	}
 
+	//ssh连接到远程 address 地址
 	conn, err := ssh.Dial("tcp", address, config)
 	if err != nil {
 		log.Error().Msgf("fail create ssh connection %s", err)

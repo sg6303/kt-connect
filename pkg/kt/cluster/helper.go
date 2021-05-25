@@ -26,6 +26,7 @@ func getKubernetesClient(kubeConfig string) (clientset *kubernetes.Clientset, er
 	return
 }
 
+//获取当前集群的cird集合，并将 podCird添加集合中
 func getPodCirds(clientset kubernetes.Interface, podCIDR string) (cidrs []string, err error) {
 	cidrs = []string{}
 
@@ -34,6 +35,7 @@ func getPodCirds(clientset kubernetes.Interface, podCIDR string) (cidrs []string
 		return
 	}
 
+	//获取节点列表
 	nodeList, err := clientset.CoreV1().Nodes().List(metav1.ListOptions{})
 
 	if err != nil {
@@ -41,6 +43,7 @@ func getPodCirds(clientset kubernetes.Interface, podCIDR string) (cidrs []string
 		return nil, err
 	}
 
+	//将所有pod的cidr添加到 集合中
 	for _, node := range nodeList.Items {
 		if node.Spec.PodCIDR != "" && len(node.Spec.PodCIDR) != 0 {
 			cidrs = append(cidrs, node.Spec.PodCIDR)
@@ -63,6 +66,7 @@ func getPodCirds(clientset kubernetes.Interface, podCIDR string) (cidrs []string
 
 func getPodCirdByInstance(clientset kubernetes.Interface) (samples mapset.Set, err error) {
 	log.Info().Msgf("Fail to get pod cidr from node.Spec.PODCIDR, try to get with pod sample")
+	//获取默认空间的pod列表
 	podList, err := clientset.CoreV1().Pods("").List(metav1.ListOptions{})
 	if err != nil {
 		log.Error().Msg("Fails to get service info of cluster")
@@ -92,6 +96,7 @@ func getServiceCird(serviceList []v1.Service) (cidr []string, err error) {
 	return
 }
 
+//获取cird，例如 10.95.0.0/16
 func getCirdFromSample(sample string) string {
 	return strings.Join(append(strings.Split(sample, ".")[:2], []string{"0", "0"}...), ".") + "/16"
 }
@@ -121,6 +126,7 @@ func wait(podName string) {
 	log.Info().Msg("Shadow Pods not ready......")
 }
 
+//定义服务
 func service(name, namespace string, labels map[string]string, port int) *v1.Service {
 	var ports []v1.ServicePort
 	ports = append(ports, v1.ServicePort{

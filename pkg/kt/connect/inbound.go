@@ -17,7 +17,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Inbound mapping local port from cluster
+// Inbound mapping local port from cluster  远程->本地
 func (s *Shadow) Inbound(exposePorts, podName, remoteIP string, credential *util.SSHCredential) (err error) {
 	kubernetesCli := &kubectl.Cli{KubeOptions: s.Options.KubeOptions}
 	ssh := &channel.SSHChannel{}
@@ -38,6 +38,7 @@ func inbound(exposePorts, podName, remoteIP string, credential *util.SSHCredenti
 		util.StopBackendProcess(<-stop, cancel)
 	}()
 
+	//生成本地ssh端口
 	log.Info().Msgf("remote %s forward to local %s", remoteIP, exposePorts)
 	localSSHPort, err := strconv.Atoi(util.GetRandomSSHPort(remoteIP))
 	if err != nil {

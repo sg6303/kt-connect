@@ -20,7 +20,8 @@ import (
 // newRunCommand return new run command
 func newRunCommand(cli kt.CliInterface, options *options.DaemonOptions, action ActionInterface) urfave.Command {
 	return urfave.Command{
-		Name:  "run",
+		Name: "run",
+		//创建一个影子部署以将请求重定向到本地用户
 		Usage: "create a shadow deployment to redirect request to user local",
 		Flags: []urfave.Flag{
 			urfave.IntFlag{
@@ -52,10 +53,14 @@ func newRunCommand(cli kt.CliInterface, options *options.DaemonOptions, action A
 
 // Run create a new service in cluster
 func (action *Action) Run(service string, cli kt.CliInterface, options *options.DaemonOptions) error {
+	//处理关闭情况
 	ch := SetUpCloseHandler(cli, options, "run")
+
+	//run业务
 	if err := run(service, cli, options); err != nil {
 		return err
 	}
+
 	// watch background process, clean the workspace and exit if background process occur exception
 	go func() {
 		<-util.Interrupt()
@@ -68,11 +73,13 @@ func (action *Action) Run(service string, cli kt.CliInterface, options *options.
 
 // Run create a new service in cluster
 func run(service string, cli kt.CliInterface, options *options.DaemonOptions) error {
+	//拿到集群
 	kubernetes, err := cli.Kubernetes()
 	if err != nil {
 		return err
 	}
 
+	//定义标签
 	labels := map[string]string{
 		"control-by":   "kt",
 		"kt-component": "run",
@@ -101,6 +108,7 @@ func runAndExposeLocalService(
 	}
 	log.Info().Msgf("create shadow pod %s ip %s", podName, podIP)
 
+	//是否要暴露- 是的话，就会创建 service
 	if options.RunOptions.Expose {
 		log.Info().Msgf("expose deployment %s to %s:%v", service, service, options.RunOptions.Port)
 		_, err = kubernetes.CreateService(service, options.Namespace, options.RunOptions.Port, labels)

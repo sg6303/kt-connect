@@ -35,7 +35,9 @@ func SetUpWaitingChannel() (ch chan os.Signal) {
 }
 
 // SetUpCloseHandler registry close handeler
+// 创建处理退出方法
 func SetUpCloseHandler(cli kt.CliInterface, options *options.DaemonOptions, action string) (ch chan os.Signal) {
+	//创建一个接收系统信号的管道
 	ch = make(chan os.Signal)
 	// see https://en.wikipedia.org/wiki/Signal_(IPC)
 	signal.Notify(ch, os.Interrupt, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGKILL)
@@ -74,10 +76,12 @@ func CleanupWorkspace(cli kt.CliInterface, options *options.DaemonOptions) {
 		}
 	}
 
+	//删除 hosts 里面的映射关系
 	if len(options.ConnectOptions.Hosts) > 0 {
 		util.DropHosts(options.ConnectOptions.Hosts)
 	}
 
+	//删除consul的服务列表
 	if len(options.ConnectOptions.ConsulServers) > 0 {
 		util.DeregisterFromConsul(options.ConnectOptions.ConsulServers, options.ConnectOptions.ConsulAddress)
 	}

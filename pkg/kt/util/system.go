@@ -16,7 +16,7 @@ import (
 
 var interrupt = make(chan bool)
 
-// StopBackendProcess ...
+// StopBackendProcess ...  停止背后进程
 func StopBackendProcess(stop bool, cancel func()) {
 	if cancel == nil {
 		return
@@ -82,7 +82,7 @@ func IsWindows() bool {
 	return runtime.GOOS == "windows"
 }
 
-// DropHosts ...
+// DropHosts ... 删除host的映射关系
 func DropHosts(hostsMap map[string]string) {
 	hosts, err := goodhosts.NewHosts()
 
@@ -106,7 +106,7 @@ func DropHosts(hostsMap map[string]string) {
 	log.Info().Msgf("- drop hosts successful.")
 }
 
-// DumpHosts DumpToHosts
+// DumpHosts DumpToHosts  添加到hosts里面
 func DumpHosts(hostsMap map[string]string) {
 	hosts, err := goodhosts.NewHosts()
 

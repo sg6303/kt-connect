@@ -33,9 +33,12 @@ type KubernetesInterface interface {
 	Deployment(name, namespace string) (deployment *appV1.Deployment, err error)
 	Scale(deployment *appV1.Deployment, replicas *int32) (err error)
 	ScaleTo(deployment, namespace string, replicas *int32) (err error)
+	//获取该命名空间下所有服务的 服务名称及ip地址映射
 	ServiceHosts(namespace string) (hosts map[string]string)
 	ClusterCrids(namespace string, podCIDR string) (cidrs []string, err error)
+	//获取或创建pod
 	GetOrCreateShadow(name, namespace, image string, labels, envs map[string]string, debug, reuseShadow bool) (podIP, podName, sshcm string, credential *util.SSHCredential, err error)
+	//创建服务
 	CreateService(name, namespace string, port int, labels map[string]string) (*coreV1.Service, error)
 	GetDeployment(name string, namespace string) (*appV1.Deployment, error)
 	UpdateDeployment(namespace string, deployment *appV1.Deployment) (*appV1.Deployment, error)

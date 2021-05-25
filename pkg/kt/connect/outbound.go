@@ -16,7 +16,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// Outbound start vpn connection
+// Outbound start vpn connection  开始vpn网络连接
 func (s *Shadow) Outbound(name, podIP string, credential *util.SSHCredential, cidrs []string, cli exec.CliInterface) (err error) {
 	ssh := channel.SSHChannel{}
 	return outbound(s, name, podIP, credential, cidrs, cli, &ssh)
@@ -31,8 +31,8 @@ func outbound(s *Shadow, name, podIP string, credential *util.SSHCredential, cid
 		util.StopBackendProcess(<-stop, cancel)
 	}()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
+	var wg sync.WaitGroup //定义一个等待组
+	wg.Add(1)             //添加几个子任务
 	go func(wg *sync.WaitGroup) {
 		err = exec.BackgroundRunWithCtx(
 			&exec.CMDContext{
@@ -40,7 +40,7 @@ func outbound(s *Shadow, name, podIP string, credential *util.SSHCredential, cid
 				Cmd: cli.Kubectl().PortForward(
 					options.Namespace,
 					name,
-					options.ConnectOptions.SSHPort),
+					options.ConnectOptions.SSHPort), //组装 kubectl port-forward 命令
 				Name: "port-forward",
 				Stop: stop,
 			},
@@ -51,7 +51,7 @@ func outbound(s *Shadow, name, podIP string, credential *util.SSHCredential, cid
 		wg.Done()
 	}(&wg)
 
-	wg.Wait()
+	wg.Wait() //只有上面的任务成功了，才可以 继续往下走
 	if err != nil {
 		return
 	}
@@ -69,6 +69,7 @@ func outbound(s *Shadow, name, podIP string, credential *util.SSHCredential, cid
 	return
 }
 
+//socks5 方式连接
 func startSocks5Connection(ssh channel.Channel, options *options.DaemonOptions) (err error) {
 	log.Info().Msgf("==============================================================")
 	log.Info().Msgf("Start SOCKS5 Proxy Successful: export http_proxy=socks5://127.0.0.1:%d", options.ConnectOptions.Socke5Proxy)

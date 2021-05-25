@@ -8,7 +8,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// GetRandomSSHPort get pod random ssh port
+// GetRandomSSHPort get pod random ssh port  获取pod随机ssh端口===》 22+ip最后一段的最后两位
+// 比如 ip=10.23.23.120  , 生成的 ssh端口为 2220
 func GetRandomSSHPort(podIP string) string {
 	parts := strings.Split(podIP, ".")
 	rdm := parts[len(parts)-1]

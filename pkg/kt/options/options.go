@@ -10,6 +10,7 @@ import (
 
 // RunOptions ...
 type RunOptions struct {
+	//是否要暴露
 	Expose bool
 	Port   int
 }
@@ -63,6 +64,7 @@ type dashboardOptions struct {
 }
 
 // DaemonOptions cli options
+//基础对象
 type DaemonOptions struct {
 	KubeConfig       string
 	Namespace        string
@@ -81,10 +83,10 @@ type DaemonOptions struct {
 
 // NewDaemonOptions return new cli default options
 func NewDaemonOptions() *DaemonOptions {
-	userHome := util.HomeDir()
-	appHome := fmt.Sprintf("%s/.ktctl", userHome)
+	userHome := util.HomeDir()                    //当前用户home目录
+	appHome := fmt.Sprintf("%s/.ktctl", userHome) //去拿到ktctl文件夹
 	util.CreateDirIfNotExist(appHome)
-	pidFile := fmt.Sprintf("%s/pid", appHome)
+	pidFile := fmt.Sprintf("%s/pid", appHome) //pid文件
 	return &DaemonOptions{
 		Namespace:  vars.DefNamespace,
 		KubeConfig: util.KubeConfig(),

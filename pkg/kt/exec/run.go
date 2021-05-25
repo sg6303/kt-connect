@@ -55,7 +55,7 @@ func BackgroundRun(cmd *exec.Cmd, name string, debug bool) (err error) {
 	return
 }
 
-// BackgroundRunWithCtx run cmd in background with context
+// BackgroundRunWithCtx run cmd in background with context  执行命令
 func BackgroundRunWithCtx(cmdCtx *CMDContext, debug bool) (err error) {
 	err = runCmd(cmdCtx, debug)
 	if err != nil {
