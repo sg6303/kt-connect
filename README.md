@@ -156,6 +156,12 @@ You can install KT Connect Dashboard by following [Install Dashboard](https://rd
 
 ## Release Notes
 
+### to-consul
+
+> Release At 2021-05-25
+
+* 增加注册到consul，参数为 --toConsul --consul=consul地址
+
 ### 0.0.12
 
 > Release At 2020-03-08

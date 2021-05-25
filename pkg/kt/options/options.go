@@ -26,6 +26,9 @@ type ConnectOptions struct {
 	Hosts                map[string]string
 	ShareShadow          bool
 	LocalDomain          string
+	Consul               bool
+	ConsulAddress        string
+	ConsulServers        map[string]string
 }
 
 type exchangeOptions struct {

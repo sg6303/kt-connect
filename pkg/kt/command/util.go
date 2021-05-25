@@ -78,6 +78,10 @@ func CleanupWorkspace(cli kt.CliInterface, options *options.DaemonOptions) {
 		util.DropHosts(options.ConnectOptions.Hosts)
 	}
 
+	if len(options.ConnectOptions.ConsulServers) > 0 {
+		util.DeregisterFromConsul(options.ConnectOptions.ConsulServers, options.ConnectOptions.ConsulAddress)
+	}
+
 	kubernetes, err := cli.Kubernetes()
 	if err != nil {
 		log.Error().Msgf("fails create kubernetes client when clean up workspace")

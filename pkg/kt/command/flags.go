@@ -22,7 +22,7 @@ func AppFlags(options *options.DaemonOptions, version string) []cli.Flag {
 		cli.StringFlag{
 			Name:        "image,i",
 			Usage:       "Custom proxy image",
-			Value:       "registry.cn-hangzhou.aliyuncs.com/rdc-incubator/kt-connect-shadow:v" + version,
+			Value:       "registry.cn-hangzhou.aliyuncs.com/rdc-incubator/kt-connect-shadow:" + version,
 			Destination: &options.Image,
 		},
 		cli.BoolFlag{
@@ -99,6 +99,17 @@ func ConnectActionFlag(options *options.DaemonOptions) []cli.Flag {
 			Name:        "localDomain",
 			Usage:       "Set local domain suffix to help dns resolve properly",
 			Destination: &options.ConnectOptions.LocalDomain,
+		},
+		cli.BoolFlag{
+			Name:        "toConsul",
+			Usage:       "register to consul",
+			Destination: &options.ConnectOptions.Consul,
+		},
+		cli.StringFlag{
+			Name:        "consul",
+			Value:       "localhost:8500",
+			Usage:       "consul address,default localhost:8500",
+			Destination: &options.ConnectOptions.ConsulAddress,
 		},
 	}
 }

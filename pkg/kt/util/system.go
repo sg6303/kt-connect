@@ -1,14 +1,17 @@
 package util
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"github.com/alibaba/kt-connect/pkg/kt/entity"
+	"github.com/lextoumbourou/goodhosts"
+	"github.com/rs/zerolog/log"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
-
-	"github.com/lextoumbourou/goodhosts"
-	"github.com/rs/zerolog/log"
 )
 
 var interrupt = make(chan bool)
@@ -126,4 +129,106 @@ func DumpHosts(hostsMap map[string]string) {
 
 	log.Info().Msg("Dump hosts successful.")
 
+}
+
+func perror(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func RegisterToConsul(hostsMap map[string]string, consulAddress string) {
+	for name, ip := range hostsMap {
+		log.Info().Msgf("Service: %s , ip: %s ===> now register to consul", name, ip)
+
+		//如果consul上已经存在，就不注册，如果不存在，则直接注册
+		res, err := http.Get("http://" + consulAddress + "/v1/catalog/service/" + name)
+		perror(err)
+		defer res.Body.Close()
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			panic(err.Error())
+		}
+		var data []entity.Server
+		errJson := json.Unmarshal(body, &data)
+		if errJson != nil {
+			panic(errJson.Error())
+		}
+		fmt.Printf("Results: %v\n", data)
+
+		if data != nil && len(data) != 0 {
+			var server = data[0]
+			if server.ServiceAddress == ip {
+				//如果一致，就是已经存在
+				continue
+			} else {
+				//将原来的删除
+				req, err := http.NewRequest(http.MethodPut, "http://"+consulAddress+"/v1/agent/service/deregister/"+server.ServiceID, nil)
+				if err != nil {
+					continue
+				}
+				req.Header.Set("Content-Type", "application/json; charset=utf-8")
+				client := &http.Client{}
+				resp, err := client.Do(req)
+				if err != nil {
+					log.Error().Msg("http post request consul is error")
+				}
+				defer resp.Body.Close()
+			}
+		}
+
+		//发起注册
+		addServer := entity.RegisterServer{ID: name + "-1", Name: name, Address: ip, Port: 80}
+		postBody, err := json.Marshal(addServer)
+		if err != nil {
+			continue
+		}
+		responseBody := bytes.NewBuffer(postBody)
+		req, err := http.NewRequest(http.MethodPut, "http://"+consulAddress+"/v1/agent/service/register", responseBody)
+		req.Header.Set("Content-Type", "application/json; charset=utf-8")
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Error().Msg("http post request consul is error")
+		}
+		defer resp.Body.Close()
+	}
+
+	log.Info().Msg(" RegisterToConsul successful.")
+}
+
+//从consul 下线
+func DeregisterFromConsul(hostsMap map[string]string, consulAddress string) {
+	for name, ip := range hostsMap {
+		log.Info().Msgf("Service: %s , ip: %s ===> now deregister from consul", name, ip)
+
+		//如果consul上已经存在，就注销
+		res, err := http.Get("http://" + consulAddress + "/v1/catalog/service/" + name)
+		perror(err)
+		defer res.Body.Close()
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			panic(err.Error())
+		}
+		var data []entity.Server
+		json.Unmarshal(body, &data)
+		fmt.Printf("Results: %v\n", data)
+
+		if data != nil && len(data) != 0 {
+			var server = data[0]
+			//将原来的删除
+			req, err := http.NewRequest(http.MethodPut, "http://"+consulAddress+"/v1/agent/service/deregister/"+server.ServiceID, nil)
+			req.Header.Set("Content-Type", "application/json; charset=utf-8")
+			client := &http.Client{}
+			resp, err := client.Do(req)
+			if err != nil {
+				log.Error().Msg("http post request consul is error")
+			}
+			defer resp.Body.Close()
+		}
+	}
+
+	log.Info().Msg(" DeregisterFromConsul successful.")
 }

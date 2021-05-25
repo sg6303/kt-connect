@@ -71,6 +71,11 @@ func connectToCluster(cli kt.CliInterface, options *options.DaemonOptions) (err 
 		setupDump2Host(options, kubernetes)
 	}
 
+	if options.ConnectOptions.Consul {
+		//需要注册到 consul
+		registerToConsul(options, kubernetes)
+	}
+
 	endPointIP, podName, credential, err := getOrCreateShadow(options, err, kubernetes)
 	if err != nil {
 		return
@@ -127,6 +132,13 @@ func setupDump2Host(options *options.DaemonOptions, kubernetes cluster.Kubernete
 	}
 	util.DumpHosts(hosts)
 	options.ConnectOptions.Hosts = hosts
+}
+
+//注册到consul
+func registerToConsul(options *options.DaemonOptions, kubernetes cluster.KubernetesInterface) {
+	hosts := kubernetes.ServiceHosts(options.Namespace)
+	util.RegisterToConsul(hosts, options.ConnectOptions.ConsulAddress)
+	options.ConnectOptions.ConsulServers = hosts
 }
 
 func envs(options *options.DaemonOptions) map[string]string {

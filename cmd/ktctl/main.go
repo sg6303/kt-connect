@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	version = "dev"
+	version = "0.0.13-rc9"
 )
 
 func init() {
