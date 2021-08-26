@@ -39,42 +39,52 @@ func NewSSHGenerator(privateKey string, publicKey string, privateKeyPath string)
 
 // NewDefaultSSHCredential ...
 func NewDefaultSSHCredential() *SSHCredential {
+	//默认定义ssh的端口
 	return &SSHCredential{
 		Port:       "2222",
 		RemoteHost: "127.0.0.1",
 	}
 }
 
-// Generate generate SSHGenerator
+// Generate generate SSHGenerator  ---> 生成ssh私钥并写入到本地文件
 func Generate(privateKeyPath string) (*SSHGenerator, error) {
+	//生成私钥
 	privateKey, err := generatePrivateKey(vars.SSHBitSize)
 	if err != nil {
 		return nil, err
 	}
 
+	//生成对应公钥
 	publicKeyBytes, err := generatePublicKey(&privateKey.PublicKey)
 	if err != nil {
 		return nil, err
 	}
+	
+	//利用私钥encode得到 pem格式
 	privateKeyBytes := encodePrivateKeyToPEM(privateKey)
 
+	//返回ssh对象
 	ssh := &SSHGenerator{
 		PrivateKey:     privateKeyBytes,
 		PrivateKeyPath: privateKeyPath,
 		PublicKey:      publicKeyBytes,
 	}
+	
+	//将私钥写道本地路径
 	err = WritePrivateKey(ssh.PrivateKeyPath, ssh.PrivateKey)
+	
 	return ssh, err
 }
 
 // PrivateKeyPath ...
 func PrivateKeyPath(component, identifier string) string {
+	//保存的路径  -->  当前账户/.ktctl/命令/kt_{version}_id_rsa
 	return fmt.Sprintf("%s/.ktctl/%s/"+vars.SSHPrivateKeyName, HomeDir(), component, identifier)
 }
 
 // generatePrivateKey creates a RSA Private Key of specified byte size
 func generatePrivateKey(bitSize int) (*rsa.PrivateKey, error) {
-	// Private Key generation
+	// Private Key generation 生成rsa私钥
 	privateKey, err := rsa.GenerateKey(rand.Reader, bitSize)
 	if err != nil {
 		return nil, err
