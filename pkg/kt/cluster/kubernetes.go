@@ -98,7 +98,7 @@ func (k *Kubernetes) GetOrCreateShadow(name, namespace, image string, labels, en
 	component, version := labels["kt-component"], labels["version"]
 	sshcm = fmt.Sprintf("kt-%s-public-key-%s", component, version)
 
-	//保存私钥地址
+	//定义保存私钥地址
 	privateKeyPath := util.PrivateKeyPath(component, version)
 
 	//如果重用shadow
@@ -121,6 +121,7 @@ func (k *Kubernetes) GetOrCreateShadow(name, namespace, image string, labels, en
 		}
 	}
 
+	//开始创建影子
 	podIP, podName, credential, err = k.createShadow(&PodMetaAndSpec{
 		&ResourceMeta{
 			Name:      name,
@@ -137,10 +138,13 @@ func (k *Kubernetes) GetOrCreateShadow(name, namespace, image string, labels, en
 //创建 shadow影子实例
 func (k *Kubernetes) createShadow(metaAndSpec *PodMetaAndSpec, sshKeyMeta *SSHkeyMeta, debug bool) (podIP string, podName string, credential *util.SSHCredential, err error) {
 
+	//生成私钥
 	generator, err := util.Generate(sshKeyMeta.PrivateKeyPath)
 	if err != nil {
 		return
 	}
+	
+	//创建私钥的configMap
 	configMap, err2 := k.createConfigMap(metaAndSpec.Meta.Labels, sshKeyMeta.Sshcm, metaAndSpec.Meta.Namespace, generator)
 
 	if err2 != nil {
@@ -155,7 +159,10 @@ func (k *Kubernetes) createShadow(metaAndSpec *PodMetaAndSpec, sshKeyMeta *SSHke
 		err = err2
 		return
 	}
+	
+	//显示pod信息
 	podIP, podName, credential = shadowResult(pod, generator)
+	
 	return
 }
 
@@ -246,10 +253,12 @@ func shadowResult(pod v1.Pod, generator *util.SSHGenerator) (string, string, *ut
 func (k *Kubernetes) createAndGetPod(metaAndSpec *PodMetaAndSpec, sshcm string, debug bool) (pod v1.Pod, err error) {
 	localIPAddress := util.GetOutboundIP()
 	log.Info().Msgf("Client address %s", localIPAddress)
+	
 	resourceMeta := metaAndSpec.Meta
 	resourceMeta.Labels["remoteAddress"] = localIPAddress
-
 	resourceMeta.Labels["kt"] = resourceMeta.Name
+	
+	//执行部署
 	client := k.Clientset.AppsV1().Deployments(resourceMeta.Namespace)
 	deployment := deployment(metaAndSpec, sshcm, debug)
 	log.Info().Msg("shadow template is prepare ready.")
