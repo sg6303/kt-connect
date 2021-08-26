@@ -18,7 +18,9 @@ import (
 // NewCommands return new Connect Action
 func NewCommands(kt kt.CliInterface, action ActionInterface, options *options.DaemonOptions) []cli.Command {
 	return []cli.Command{
+		//将本地服务暴露到Kubernetes集群    ktctl run localservice --port 8080 --expose
 		newRunCommand(kt, options, action),
+		//连接的命令
 		newConnectCommand(kt, options, action),
 		newExchangeCommand(kt, options, action),
 		newMeshCommand(kt, options, action),
