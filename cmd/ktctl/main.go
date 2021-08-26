@@ -37,6 +37,9 @@ func main() {
 	app.Usage = ""
 	app.Version = version
 	app.Authors = command.NewCliAuthor()
+	
+	//所有命令的父级 , 这里的所有参数都必须写在 下面 newCommand 的命令之前，也就是这些参数是ktctl的参数
+	//比如 ktctl -n env-dev-backend -i local-registry.arnoo.com/tob/elasticsearch:7.7.1  run elasticsearch-portal  --port 8080 --expose
 	app.Flags = command.AppFlags(options, version)
 
 	context := &kt.Cli{Options: options}
