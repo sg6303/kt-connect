@@ -51,7 +51,7 @@ func newRunCommand(cli kt.CliInterface, options *options.DaemonOptions, action A
 	}
 }
 
-// Run create a new service in cluster
+// Run create a new service in cluster  === run的第一个参数必须是 服务名称
 func (action *Action) Run(service string, cli kt.CliInterface, options *options.DaemonOptions) error {
 	//处理关闭情况
 	ch := SetUpCloseHandler(cli, options, "run")
