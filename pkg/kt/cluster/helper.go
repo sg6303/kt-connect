@@ -170,6 +170,7 @@ func container(image string, args []string, envs map[string]string) v1.Container
 	}
 }
 
+//定义部署deployment内容
 func deployment(metaAndSpec *PodMetaAndSpec, volume string, debug bool) *appV1.Deployment {
 	var args []string
 	if debug {
